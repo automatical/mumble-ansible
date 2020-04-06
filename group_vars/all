@@ -1,0 +1,5 @@
+---
+# Hostname for LetsEncrypt Certificate
+le_domain: mumble.scotlug.levellingup.co.uk
+# Email address to use for Certbot
+le_email: kenny@heloo.net

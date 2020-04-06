@@ -1,7 +1,7 @@
 ---
 # This playbook deploys the whole application stack in this site.
 
-- name: configure pppa and install mumble
+- name: configure ppa, letsencrypt and install mumble
   hosts: mumble
   remote_user: root
 

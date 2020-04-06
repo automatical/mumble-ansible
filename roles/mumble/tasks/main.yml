@@ -9,3 +9,62 @@
   apt:
     name: mumble-server
     state: present
+
+- name: Configure Mumble Server
+  template:
+    src: mumble-server.ini.j2
+    dest: /etc/mumble-server.ini
+    mode: 0640
+
+- name: Install letsencrypt certbot
+  apt:
+    name: certbot
+    state: present
+
+- name: check if we have certificate already
+  stat: 
+    path: /etc/letsencrypt/live/{{ le_domain }}
+  register: le_certificate
+
+- name: Request letsencrypt certificate if we don't have one already
+  command: certbot certonly --cert-name {{ le_domain }} -d {{ le_domain }} -m {{ le_email }} --standalone --agree-tos
+  when: le_certificate.stat.exists == False
+
+- name: Ensure group "ssl" exists
+  group:
+    name: ssl
+    state: present
+
+- name: Give group ownership of certificates
+  file:
+    path: /etc/letsencrypt
+    state: directory
+    recurse: yes
+    owner: root
+    group: ssl
+
+- name: Give r/x permissions to certificates from ssl group
+  file:
+    path: /etc/letsencrypt
+    owner: root
+    group: ssl
+    mode: 'g+rx'
+    recurse: yes
+
+- name: adding mumble-server to group ssl
+  user:
+    name: mumble-server
+    groups: ssl
+    append: yes
+
+- name: Restart Mumble Server
+  service:
+    name: mumble-server
+    state: restarted
+
+- name: Create Daily Certbot Update Cron
+  cron:
+    name: "update letsencrypt certificate"
+    minute: "0"
+    hour: "2"
+    job: '/opt/certbot/certbot-auto renew --quiet --post-hook "service nginx reload ; start-stop-daemon --quiet --oknodo --stop --signal 10 --pidfile /var/run/mumble-server/mumble-server.pid"'
