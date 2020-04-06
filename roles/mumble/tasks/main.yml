@@ -1,0 +1,11 @@
+---
+
+- name: Configure Mumble PPA
+  apt_repository:
+    repo: 'ppa:mumble/release'
+    update_cache: true
+
+- name: Install Mumble Server from PPA
+  apt:
+    name: mumble-server
+    state: present
